@@ -1,0 +1,126 @@
+name: Build and deploy scrub spike
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Verify FFmpeg
+        run: |
+          ffmpeg -version
+          ffmpeg -hide_banner -encoders | grep -q libwebp
+
+      - name: Download approved 1280x768 production clip
+        run: |
+          curl --fail --location --retry 3             "https://raw.githubusercontent.com/getsimplifiedtech/getsimplifiedtech-sts-hero-assets/main/output_71133.mp4"             --output source.mp4
+          ffprobe -v error -select_streams v:0             -show_entries stream=width,height,r_frame_rate             -show_entries format=duration             -of default=noprint_wrappers=1 source.mp4
+
+      - name: Build 60, 90 and 120 frame WebP sets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site/frames
+          cp index.html scrub.css scrub.js _site/
+
+          duration="$(ffprobe -v error -show_entries format=duration -of csv=p=0 source.mp4)"
+          echo "Source duration: $duration"
+
+          make_set () {
+            key="$1"
+            count="$2"
+            width="$3"
+            height="$4"
+
+            mkdir -p "_site/frames/$key"
+
+            rate="$(python3 - "$count" "$duration" <<'PY'
+import sys
+print(float(sys.argv[1]) / float(sys.argv[2]))
+PY
+)"
+
+            echo "Building $key: $count frames at $width x $height, sample rate $rate fps"
+
+            ffmpeg -hide_banner -loglevel error -y               -i source.mp4               -vf "fps=$rate,scale=$width:$height:flags=lanczos"               -frames:v "$count"               -c:v libwebp               -quality 80               -compression_level 6               -start_number 0               "_site/frames/$key/%03d.webp"
+
+            actual="$(find "_site/frames/$key" -maxdepth 1 -name '*.webp' | wc -l)"
+            test "$actual" -eq "$count"
+          }
+
+          make_set 60    60  1280 768
+          make_set 60-m  60   960 576
+          make_set 90    90  1280 768
+          make_set 90-m  90   960 576
+          make_set 120  120  1280 768
+          make_set 120-m 120   960 576
+
+      - name: Generate measured manifest
+        run: |
+          python3 - <<'PY'
+import json
+from pathlib import Path
+
+root = Path("_site/frames")
+spec = {
+    "60": (1280, 768),
+    "60-m": (960, 576),
+    "90": (1280, 768),
+    "90-m": (960, 576),
+    "120": (1280, 768),
+    "120-m": (960, 576),
+}
+
+manifest = {}
+for key, (w, h) in spec.items():
+    files = sorted((root / key).glob("*.webp"))
+    manifest[key] = {
+        "bytes": sum(p.stat().st_size for p in files),
+        "w": w,
+        "h": h,
+    }
+
+(root / "manifest.json").write_text(
+    json.dumps(manifest, indent=1) + "\n",
+    encoding="utf-8",
+)
+
+print(json.dumps(manifest, indent=2))
+PY
+
+      - name: Add no-Jekyll marker
+        run: touch _site/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
