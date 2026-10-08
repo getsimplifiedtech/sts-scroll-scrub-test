@@ -31,8 +31,8 @@ jobs:
 
       - name: Download approved 1280x768 production clip
         run: |
-          curl --fail --location --retry 3             "https://raw.githubusercontent.com/getsimplifiedtech/getsimplifiedtech-sts-hero-assets/main/output_71133.mp4"             --output source.mp4
-          ffprobe -v error -select_streams v:0             -show_entries stream=width,height,r_frame_rate             -show_entries format=duration             -of default=noprint_wrappers=1 source.mp4
+          curl --fail --location --retry 3 "https://raw.githubusercontent.com/getsimplifiedtech/getsimplifiedtech-sts-hero-assets/main/output_71133.mp4" --output source.mp4
+          ffprobe -v error -select_streams v:0 -show_entries stream=width,height,r_frame_rate -show_entries format=duration -of default=noprint_wrappers=1 source.mp4
 
       - name: Build 60, 90 and 120 frame WebP sets
         shell: bash
@@ -51,16 +51,19 @@ jobs:
             height="$4"
 
             mkdir -p "_site/frames/$key"
-
-            rate="$(python3 - "$count" "$duration" <<'PY'
-import sys
-print(float(sys.argv[1]) / float(sys.argv[2]))
-PY
-)"
+            rate="$(awk -v n="$count" -v d="$duration" 'BEGIN { printf "%.12f", n/d }')"
 
             echo "Building $key: $count frames at $width x $height, sample rate $rate fps"
 
-            ffmpeg -hide_banner -loglevel error -y               -i source.mp4               -vf "fps=$rate,scale=$width:$height:flags=lanczos"               -frames:v "$count"               -c:v libwebp               -quality 80               -compression_level 6               -start_number 0               "_site/frames/$key/%03d.webp"
+            ffmpeg -hide_banner -loglevel error -y \
+              -i source.mp4 \
+              -vf "fps=$rate,scale=$width:$height:flags=lanczos" \
+              -frames:v "$count" \
+              -c:v libwebp \
+              -quality 80 \
+              -compression_level 6 \
+              -start_number 0 \
+              "_site/frames/$key/%03d.webp"
 
             actual="$(find "_site/frames/$key" -maxdepth 1 -name '*.webp' | wc -l)"
             test "$actual" -eq "$count"
@@ -74,37 +77,33 @@ PY
           make_set 120-m 120   960 576
 
       - name: Generate measured manifest
+        shell: bash
         run: |
-          python3 - <<'PY'
-import json
-from pathlib import Path
+          set -euo pipefail
 
-root = Path("_site/frames")
-spec = {
-    "60": (1280, 768),
-    "60-m": (960, 576),
-    "90": (1280, 768),
-    "90-m": (960, 576),
-    "120": (1280, 768),
-    "120-m": (960, 576),
-}
+          bytes_for () {
+            find "_site/frames/$1" -maxdepth 1 -name '*.webp' -printf '%s\n' | awk '{s+=$1} END {print s+0}'
+          }
 
-manifest = {}
-for key, (w, h) in spec.items():
-    files = sorted((root / key).glob("*.webp"))
-    manifest[key] = {
-        "bytes": sum(p.stat().st_size for p in files),
-        "w": w,
-        "h": h,
-    }
+          b60="$(bytes_for 60)"
+          b60m="$(bytes_for 60-m)"
+          b90="$(bytes_for 90)"
+          b90m="$(bytes_for 90-m)"
+          b120="$(bytes_for 120)"
+          b120m="$(bytes_for 120-m)"
 
-(root / "manifest.json").write_text(
-    json.dumps(manifest, indent=1) + "\n",
-    encoding="utf-8",
-)
+          cat > _site/frames/manifest.json <<EOF
+          {
+            "60":   { "bytes": $b60,   "w": 1280, "h": 768 },
+            "60-m": { "bytes": $b60m,  "w": 960,  "h": 576 },
+            "90":   { "bytes": $b90,   "w": 1280, "h": 768 },
+            "90-m": { "bytes": $b90m,  "w": 960,  "h": 576 },
+            "120":  { "bytes": $b120,  "w": 1280, "h": 768 },
+            "120-m":{ "bytes": $b120m, "w": 960,  "h": 576 }
+          }
+          EOF
 
-print(json.dumps(manifest, indent=2))
-PY
+          cat _site/frames/manifest.json
 
       - name: Add no-Jekyll marker
         run: touch _site/.nojekyll
