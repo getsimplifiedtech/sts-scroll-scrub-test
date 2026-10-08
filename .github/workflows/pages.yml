@@ -26,8 +26,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify FFmpeg
+      - name: Install FFmpeg
         run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
           ffmpeg -version
           ffmpeg -hide_banner -encoders | grep -q libwebp
 
