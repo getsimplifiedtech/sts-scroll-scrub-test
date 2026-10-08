@@ -1,41 +1,56 @@
-
-:root {
-  --bg: #0a0908;
-  --ink: #f4efe6;
-  --accent: #e8a13a;
-  --cond: "Barlow Condensed", "Arial Narrow", sans-serif;
-  --sans: "Barlow", system-ui, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, monospace;
-  /* Measurement defaults (not standards). scrub.js can override via ?track= */
-  --track: 300;
+/*
+ * STS Scroll-Scrub component styles (structure + base theme).
+ * Theme and geometry are CSS custom properties on .scrub; override per site.
+ * Page-level styles (body, hero placeholder) live in demo.css, not here.
+ */
+.scrub {
+  --scrub-bg: #0a0908;
+  --scrub-ink: #f4efe6;
+  --scrub-accent: #e8a13a;
+  --scrub-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --scrub-sans: "Barlow", system-ui, sans-serif;
+  --scrub-mono: "JetBrains Mono", ui-monospace, monospace;
+  /* media box geometry (frame aspect, anchor point, width) */
+  --scrub-aspect: 5 / 3;
+  --scrub-x: 64%;
+  --scrub-y: 50%;
+  --scrub-box-w: min(100vw, 166vh);
+  /* set from config by scrub.js */
+  --scrub-track: 300;
+  background: var(--scrub-bg);
+  color: var(--scrub-ink);
+  font-family: var(--scrub-sans);
 }
-* { box-sizing: border-box; }
-html { background: var(--bg); color-scheme: dark; }
-body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-text-size-adjust: 100%; }
-.mono { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@supports (height: 1svh) { .scrub { --scrub-box-w: min(100vw, 166svh); } }
 
-.pre, .post { min-height: 100vh; min-height: 100svh; display: grid; place-items: center; text-align: center; background: var(--bg); }
-.post { min-height: 70vh; }
+.scrub__sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ---------- Tier 4 (default): static, readable, no JS needed ---------- */
-.scrub__stage { position: relative; background: var(--bg); }
-.scrub__poster { display: block; width: min(100%, 1280px); height: auto; margin: 0 auto; aspect-ratio: 5 / 3; }
+.scrub__stage { position: relative; background: var(--scrub-bg); }
+.scrub__poster { display: block; width: min(100%, 1280px); height: auto; margin: 0 auto; aspect-ratio: var(--scrub-aspect); }
 .scrub__canvas, .scrub__stills { display: none; }
 .scrub__copy { display: grid; gap: 40px; padding: 32px 6vw 64px; max-width: 720px; margin: 0 auto; }
-.beat__h { font: 800 clamp(40px, 9vw, 72px)/.9 var(--cond); text-transform: uppercase; margin: 8px 0 12px; }
-.beat__p { margin: 0; max-width: 34ch; opacity: .8; line-height: 1.5; }
-.eyebrow { color: var(--accent); opacity: 1; margin: 0; }
-.cta { display: inline-block; margin-top: 18px; color: var(--bg); background: var(--accent); font: 700 15px var(--cond); letter-spacing: .12em; text-transform: uppercase; padding: 14px 22px; text-decoration: none; }
-.cta:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.scrub__eyebrow { margin: 0; color: var(--scrub-accent); font: 12px var(--scrub-mono); letter-spacing: .12em; text-transform: uppercase; }
+.scrub__h { font: 800 clamp(40px, 9vw, 72px)/.9 var(--scrub-display); text-transform: uppercase; margin: 8px 0 12px; }
+.scrub__p { margin: 0; max-width: 34ch; opacity: .8; line-height: 1.5; }
+.scrub__cta { display: inline-block; margin-top: 18px; color: var(--scrub-bg); background: var(--scrub-accent); font: 700 15px var(--scrub-display); letter-spacing: .12em; text-transform: uppercase; padding: 14px 22px; text-decoration: none; }
+.scrub__cta:focus-visible { outline: 2px solid var(--scrub-ink); outline-offset: 3px; }
 
 /* ---------- Tiers 1-3: enabled only when JS adds .js-scrub ---------- */
-.js-scrub .scrub__track { height: calc(var(--track) * 1vh); height: calc(var(--track) * 1svh); }
-.js-scrub .scrub__stage { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
-.js-scrub .scrub__poster { position: absolute; inset: auto; left: 64%; top: 50%; width: var(--box-w); max-width: none; height: auto; transform: translate(-50%, -50%); }
-.js-scrub .scrub__canvas, .js-scrub .scrub__stills { display: block; position: absolute; left: 64%; top: 50%; width: var(--box-w); aspect-ratio: 5 / 3; transform: translate(-50%, -50%); }
-.js-scrub { --box-w: min(100vw, 166svh); }
-@supports not (height: 1svh) { .js-scrub { --box-w: min(100vw, 166vh); } }
+.js-scrub .scrub__track { height: calc(var(--scrub-track) * 1vh); }
+.js-scrub .scrub__stage { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+@supports (height: 1svh) {
+  .js-scrub .scrub__track { height: calc(var(--scrub-track) * 1svh); }
+  .js-scrub .scrub__stage { height: 100svh; }
+}
+.js-scrub .scrub__poster,
+.js-scrub .scrub__canvas,
+.js-scrub .scrub__stills {
+  position: absolute; left: var(--scrub-x); top: var(--scrub-y);
+  width: var(--scrub-box-w); max-width: none; transform: translate(-50%, -50%);
+}
+.js-scrub .scrub__poster { height: auto; }
+.js-scrub .scrub__canvas, .js-scrub .scrub__stills { display: block; aspect-ratio: var(--scrub-aspect); }
 
 /* Feathered edge so no rectangle shows. -webkit- prefix for Safari. */
 .js-scrub .scrub__canvas, .js-scrub .scrub__poster, .js-scrub .scrub__stills {
@@ -44,40 +59,45 @@ body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--s
   mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent), linear-gradient(to bottom, transparent, #000 5%, #000 95%, transparent);
   mask-composite: intersect;
 }
+
+/* The poster stays visible until a real frame has been painted; the canvas is never shown blank. */
 .js-scrub .scrub__canvas { opacity: 0; }
-.js-scrub .scrub[data-ready="1"] .scrub__canvas, .js-scrub .scrub[data-tier="1"][data-ready="1"] .scrub__canvas, .js-scrub .scrub[data-tier="2"][data-ready="1"] .scrub__canvas { opacity: 1; }
-.js-scrub .scrub[data-ready="1"] .scrub__poster { opacity: 0; }
-.js-scrub .scrub__poster { transition: opacity .25s linear; }
+.js-scrub[data-ready="1"] .scrub__canvas { opacity: 1; }
+.js-scrub[data-ready="1"] .scrub__poster { opacity: 0; transition: opacity .25s linear; }
+
+/* Tier 3: stills stack over the poster, which stays as the base layer. */
+.js-scrub[data-tier="3"] .scrub__canvas { display: none; }
+.js-scrub[data-tier="3"][data-ready="1"] .scrub__poster { opacity: 1; }
 .js-scrub .scrub__stills img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
-.js-scrub .scrub[data-tier="4"] .scrub__stills { display: none; }
-.js-scrub .scrub[data-tier="3"] .scrub__canvas { display: none; }
+.js-scrub .scrub__stills img:first-child { opacity: 1; }
 
 .js-scrub .scrub__copy { position: absolute; inset: 0; display: block; padding: 0; max-width: none; margin: 0; pointer-events: none; }
-.js-scrub .beat { position: absolute; left: 5vw; bottom: 12vh; max-width: min(34ch, 38vw); opacity: 0; transform: translateY(14px); will-change: opacity, transform; }
-.js-scrub .beat[data-beat="0"] { opacity: 1; transform: none; }
-.js-scrub .beat.is-on { pointer-events: auto; }
-.js-scrub .beat__h { font-size: clamp(40px, 4.8vw, 88px); }
+.js-scrub .scrub__beat { position: absolute; left: 5vw; bottom: 12vh; max-width: min(34ch, 38vw); opacity: 0; transform: translateY(14px); will-change: opacity, transform; }
+.js-scrub .scrub__beat:first-of-type { opacity: 1; transform: none; }
+.js-scrub .scrub__beat.is-on { pointer-events: auto; }
+.js-scrub .scrub__h { font-size: clamp(40px, 4.8vw, 88px); }
 
-/* Portrait: burger scaled up and sits in the upper area, copy anchored below. */
+/* Portrait: media scaled up in the upper area, copy anchored below. */
 @media (max-aspect-ratio: 1/1) {
-  .js-scrub { --box-w: 150vw; }
-  .js-scrub .scrub__poster, .js-scrub .scrub__canvas, .js-scrub .scrub__stills { left: 50%; top: 34%; }
-  .js-scrub .beat { left: 6vw; right: 6vw; bottom: 7svh; max-width: none; }
-  .js-scrub .beat__h { font-size: clamp(44px, 13vw, 88px); }
+  .scrub { --scrub-box-w: 150vw; --scrub-x: 50%; --scrub-y: 34%; }
+  .js-scrub .scrub__beat { left: 6vw; right: 6vw; bottom: 7vh; max-width: none; }
+  .js-scrub .scrub__h { font-size: clamp(44px, 13vw, 88px); }
+}
+@supports (height: 1svh) {
+  @media (max-aspect-ratio: 1/1) { .js-scrub .scrub__beat { bottom: 7svh; } }
 }
 /* Short landscape */
 @media (max-height: 480px) and (min-aspect-ratio: 1/1) {
-  .js-scrub .beat { bottom: 6vh; max-width: 34vw; }
-  .js-scrub .beat__h { font-size: clamp(32px, 6.5vw, 64px); }
+  .js-scrub .scrub__beat { bottom: 6vh; max-width: 34vw; }
+  .js-scrub .scrub__h { font-size: clamp(32px, 6.5vw, 64px); }
 }
-
-/* ---------- Diagnostics HUD ---------- */
-.hud { position: fixed; left: 8px; top: 8px; z-index: 50; max-width: calc(100vw - 16px); background: rgba(0,0,0,.78); border: 1px solid rgba(244,239,230,.18); color: #bff5c3; font: 11px/1.45 var(--mono); padding: 8px 10px; white-space: pre; pointer-events: none; }
-.hud b { color: var(--ink); font-weight: 400; }
-.hud .warn { color: #ffb86b; }
 
 @media (prefers-reduced-motion: reduce) {
-  .beat, .scrub__poster { transition: none !important; }
+  .scrub__beat, .scrub__poster { transition: none !important; }
 }
 
-@media (max-width: 600px) { .hud { font-size: 9px; padding: 6px 8px; } }
+/* ---------- Diagnostics HUD (engineering only; created by scrub.js when enabled) ---------- */
+.scrub__hud { position: fixed; left: 8px; top: 8px; z-index: 50; max-width: calc(100vw - 16px); background: rgba(0,0,0,.78); border: 1px solid rgba(244,239,230,.18); color: #bff5c3; font: 11px/1.45 ui-monospace, "JetBrains Mono", monospace; padding: 8px 10px; white-space: pre; pointer-events: none; overflow: hidden; }
+.scrub__hud b { color: #f4efe6; font-weight: 400; }
+.scrub__hud .warn { color: #ffb86b; }
+@media (max-width: 600px) { .scrub__hud { font-size: 9px; padding: 6px 8px; } }

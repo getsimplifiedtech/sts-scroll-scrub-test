@@ -1,0 +1,8 @@
+/* Demo page shell only. Not part of the reusable component (see scrub.css). */
+:root { --bg: #0a0908; --ink: #f4efe6; }
+* { box-sizing: border-box; }
+html { background: var(--bg); color-scheme: dark; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; -webkit-text-size-adjust: 100%; }
+.mono { font: 12px ui-monospace, monospace; letter-spacing: .12em; text-transform: uppercase; opacity: .7; }
+.pre, .post { min-height: 100vh; min-height: 100svh; display: grid; place-items: center; text-align: center; background: var(--bg); }
+.post { min-height: 70vh; }

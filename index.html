@@ -3,45 +3,69 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>STS Scroll-Scrub Spike</title>
-<meta name="description" content="Measurement spike: canvas image-sequence scroll scrub with native sticky.">
+<title>STS Scroll-Scrub Demo</title>
+<meta name="description" content="Reusable canvas image-sequence scroll scrub with native sticky (STS Product #2).">
+<link rel="stylesheet" href="demo.css">
 <link rel="stylesheet" href="scrub.css">
 </head>
 <body>
 
-<!-- Placeholder for the ambient hero above the scrub (the real hero is unchanged). -->
+<!-- Placeholder for the Ambient Cinematic Hero (Product #1). The scrub section sits directly beneath it. -->
 <section class="pre" aria-label="Placeholder for the ambient hero">
   <p class="mono">[ ambient hero sits here ]<br>scroll down</p>
 </section>
 
 <!--
-  STATIC-FIRST: everything below is a complete, readable section with no JS.
-  scrub.js adds .js-scrub on <html> only after capability checks pass.
+  STATIC-FIRST: everything inside this section is complete, readable markup with no JS.
+  Poster, chapters and CTA are authored here, never injected by script.
+  scrub.js adds .js-scrub to this element only after capability checks pass.
+  `engineering` + `hud` below are for measurement builds; delete both in production.
 -->
-<section class="scrub" id="scrub" data-tier="4" aria-labelledby="scrub-h">
+<section class="scrub" id="scrub" data-sts-scrub data-tier="4" aria-labelledby="scrub-h">
+  <script type="application/json" data-scrub-config>
+  {
+    "frameCount": 90,
+    "availableCounts": [60, 90, 120],
+    "sequences": {
+      "desktop": { "key": "{n}",   "src": "frames/{key}/{i}.webp", "w": 1280, "h": 768 },
+      "mobile":  { "key": "{n}-m", "src": "frames/{key}/{i}.webp", "w": 960,  "h": 576 }
+    },
+    "manifest": "frames/manifest.json",
+    "stills": { "count": 5 },
+    "track": 300,
+    "window": 12,
+    "lerp": 0.14,
+    "dprCap": 1.5,
+    "preload": { "margin": "0px 0px -1px 0px" },
+    "activeMargin": "50% 0px",
+    "fallback": { "auto": true },
+    "engineering": true,
+    "hud": true
+  }
+  </script>
   <div class="scrub__track">
     <div class="scrub__stage">
-      <img class="scrub__poster" src="frames/60/000.webp" width="1280" height="768" alt="A double smash burger with melted cheese, lettuce, tomato and pickles on a dark counter">
+      <img class="scrub__poster" src="frames/90/000.webp" width="1280" height="768" alt="A double smash burger with melted cheese, lettuce, tomato and pickles on a dark counter">
       <canvas class="scrub__canvas" aria-hidden="true"></canvas>
       <div class="scrub__stills" aria-hidden="true"></div>
 
       <div class="scrub__copy">
-        <h2 id="scrub-h" class="sr-only">How the burger is made</h2>
-        <article class="beat" data-beat="0">
-          <p class="mono eyebrow">01 / SMASH</p>
-          <p class="beat__h">Pressed hard.<br>Seared fast.</p>
-          <p class="beat__p">Placeholder copy. Two thin patties hit a ripping hot flat-top and get smashed for a crust.</p>
+        <h2 id="scrub-h" class="scrub__sr">How the burger is made</h2>
+        <article class="scrub__beat">
+          <p class="scrub__eyebrow">01 / SMASH</p>
+          <p class="scrub__h">Pressed hard.<br>Seared fast.</p>
+          <p class="scrub__p">Placeholder copy. Two thin patties hit a ripping hot flat-top and get smashed for a crust.</p>
         </article>
-        <article class="beat" data-beat="1">
-          <p class="mono eyebrow">02 / MELT</p>
-          <p class="beat__h">Cheese goes<br>all the way down.</p>
-          <p class="beat__p">Placeholder copy. American cheese melts into every edge before the bun lands.</p>
+        <article class="scrub__beat">
+          <p class="scrub__eyebrow">02 / MELT</p>
+          <p class="scrub__h">Cheese goes<br>all the way down.</p>
+          <p class="scrub__p">Placeholder copy. American cheese melts into every edge before the bun lands.</p>
         </article>
-        <article class="beat" data-beat="2">
-          <p class="mono eyebrow">03 / STACK</p>
-          <p class="beat__h">Built to<br>be eaten now.</p>
-          <p class="beat__p">Placeholder copy. Pickles, onion, tomato and sauce, then straight to the counter.</p>
-          <p><a class="cta" href="#after">View the menu</a></p>
+        <article class="scrub__beat">
+          <p class="scrub__eyebrow">03 / STACK</p>
+          <p class="scrub__h">Built to<br>be eaten now.</p>
+          <p class="scrub__p">Placeholder copy. Pickles, onion, tomato and sauce, then straight to the counter.</p>
+          <p><a class="scrub__cta" href="#after">View the menu</a></p>
         </article>
       </div>
     </div>
@@ -52,9 +76,6 @@
   <p class="mono">[ next section ]</p>
 </section>
 
-<aside class="hud" id="hud" aria-hidden="true" hidden></aside>
-
-<noscript><style>.scrub__canvas,.scrub__stills{display:none}</style></noscript>
 <script src="scrub.js" defer></script>
 </body>
 </html>
